@@ -1,0 +1,10 @@
+{
+  "name": "smart-cafe-manager",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": ["apps/*", "functions", "packages/*"],
+  "scripts": {
+    "lint": "echo \"(eslint comes later)\"",
+    "test": "echo \"(no tests yet)\""
+  }
+}
