@@ -1,0 +1,15 @@
+# Node / Yarn
+node_modules
+.yarn
+.pnp.*
+
+# Expo / React Native
+*.expo
+.expo-shared
+.DS_Store
+
+# macOS
+*.DS_Store
+
+# Firebase emulator logs
+firebase-debug.log*
