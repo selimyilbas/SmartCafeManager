@@ -1,0 +1,17 @@
+# Flutter
+build/
+.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache
+.idea/
+*.iml
+macos/Pods/
+macos/Flutter/ephemeral/
+
+# VSCode
+.vscode/
+
+# iOS
+ios/Pods/

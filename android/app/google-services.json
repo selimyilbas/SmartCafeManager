@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "514838871492",
+    "project_id": "smartcafemanager-a8231",
+    "storage_bucket": "smartcafemanager-a8231.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:514838871492:android:700179cb1bf12c6ca53891",
+        "android_client_info": {
+          "package_name": "com.example.smart_cafe_manager"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAAFBxM0xWyusY15phAwPUcnj5Oy675PNA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
