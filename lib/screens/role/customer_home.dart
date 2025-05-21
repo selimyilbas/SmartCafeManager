@@ -46,14 +46,25 @@ class CustomerHome extends StatelessWidget {
       body: const Center(
         child: Text('Hoşgeldin Müşteri 👋'),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        icon: const Icon(Icons.qr_code_scanner),
-        label: const Text('Masa Tara'),
-        onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const ScanTableScreen()),
-          );
-        },
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton.extended(
+            heroTag: 'scan',
+            icon: const Icon(Icons.qr_code_scanner),
+            label: const Text('Masa Tara'),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const ScanTableScreen()),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          ElevatedButton(
+            onPressed: () => Navigator.pushNamed(context, '/menu'),
+            child: const Text('Menüye Git'),
+          ),
+        ],
       ),
     );
   }
