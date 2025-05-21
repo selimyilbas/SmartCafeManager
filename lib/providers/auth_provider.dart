@@ -23,4 +23,9 @@ class AuthProvider extends ChangeNotifier {
     }
     notifyListeners();
   }
+
+  Future<void> signOut() async {
+    await _auth.signOut();
+    notifyListeners(); // kullanıcı logout olduğunda UI güncellenir
+  }
 }
