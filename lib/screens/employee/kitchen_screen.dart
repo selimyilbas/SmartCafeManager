@@ -1,15 +1,160 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+import '../../providers/kitchen_provider.dart';
 
 class KitchenScreen extends StatelessWidget {
   const KitchenScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Text(
-        'Kitchen — Henüz implement edilmedi',
-        style: TextStyle(fontSize: 18),
+    return DefaultTabController(
+      length: 3,
+      child: Scaffold(
+        appBar: const TabBar(
+          tabs: [
+            Tab(text: 'Pending'),
+            Tab(text: 'Preparing'),
+            Tab(text: 'Ready'),
+          ],
+        ),
+        body: const TabBarView(
+          children: [
+            _OrderList(status: 'pending'),
+            _OrderList(status: 'preparing'),
+            _OrderList(status: 'ready'),
+          ],
+        ),
       ),
     );
+  }
+}
+
+/*────────────────────────  Ortak liste bileşeni  ────────────────────────*/
+class _OrderList extends StatelessWidget {
+  const _OrderList({required this.status});
+  final String status;
+
+  @override
+  Widget build(BuildContext context) {
+    final prov = context.watch<KitchenProvider>();
+
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: prov.stream(status),
+      builder: (context, snap) {
+        if (!snap.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final docs = snap.data!.docs;
+        if (docs.isEmpty) {
+          return const Center(child: Text('Boş'));
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.only(bottom: 12),
+          itemCount: docs.length,
+          itemBuilder: (_, i) {
+            /*  Firestore verisi  */
+            final d       = docs[i].data();
+            final oid     = docs[i].id;
+            final items   = (d['items'] ?? []) as List<dynamic>;
+            final tableId = d['tableId'] ?? '—';
+
+            final created = (d['createdAt'] as Timestamp).toDate();
+            final fmtTime = DateFormat.Hm().format(created);
+            final minutes = DateTime.now().difference(created).inMinutes;
+
+            /* Bekleme süresi rengine göre uyarı */
+            final ageColor = minutes > 15
+                ? Colors.red
+                : minutes > 5
+                    ? Colors.orange
+                    : Colors.grey;
+
+            /*  Başlık bilgisi  */
+            final totalQty = items.fold<int>(0, (p, e) => p + (e['qty'] as int));
+            final title    = '$totalQty ürün • Masa: $tableId';
+
+            /*  Alt başlık (her satır:  qty × ad  (opts)  Not: … ) */
+            final subtitle = items.map((e) {
+              final q   = e['qty'];
+              final nm  = e['name'];
+              final opt = (e['options'] ?? {}) as Map;
+              final optsText =
+                  opt.entries.map((e) => '${e.key}:${e.value}').join(', ');
+              final note = (e['note'] ?? '').toString().trim();
+              final noteTxt = note.isNotEmpty ? '\n    Not: $note' : '';
+              return '• $q × $nm'
+                     '${optsText.isNotEmpty ? '  ($optsText)' : ''}'
+                     '$noteTxt';
+            }).join('\n');
+
+            /*  Kart  */
+            return Card(
+              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    /*  SOL: içerik  */
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(title,
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 4),
+                          Text(subtitle, style: const TextStyle(fontSize: 13)),
+                        ],
+                      ),
+                    ),
+
+                    /*  SAĞ: saat + buton  */
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(fmtTime,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w600, fontSize: 13)),
+                        Text('+$minutes dk',
+                            style:
+                                TextStyle(color: ageColor, fontSize: 12)),
+                        const SizedBox(height: 6),
+                        _actionButton(context, prov, status, oid),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  /*────────────────────────  Duruma göre aksiyon  ────────────────────────*/
+  Widget _actionButton(
+      BuildContext ctx, KitchenProvider p, String st, String oid) {
+    switch (st) {
+      case 'pending':
+        return IconButton(
+          icon: const Icon(Icons.play_arrow),
+          tooltip: 'Preparing',
+          onPressed: () => p.setPreparing(oid),
+        );
+      case 'preparing':
+        return IconButton(
+          icon: const Icon(Icons.check),
+          tooltip: 'Ready',
+          onPressed: () => p.setReady(oid),
+        );
+      default:
+        return const SizedBox.shrink();      // ready kartı için buton yok
+    }
   }
 }

@@ -1,18 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../providers/auth_provider.dart' as app_auth;
 import '../employee/kitchen_screen.dart';
 import '../employee/stock_screen.dart';
 import '../employee/shift_screen.dart';
-
-
-//import '../../providers/auth_provider.dart' ;
-//import '../employee/shift_screen.dart';
-//import '../../services/shift_service.dart';
-//import '../../services/invite_service.dart';
-
 
 class EmployeeHome extends StatefulWidget {
   const EmployeeHome({super.key});
@@ -22,9 +14,10 @@ class EmployeeHome extends StatefulWidget {
 }
 
 class _EmployeeHomeState extends State<EmployeeHome> {
-  int idx = 0;
+  /* ------------------------------------------------------------  Bottom-nav */
+  int _index = 0;
 
-  final pages = const [
+  static const _pages = [
     KitchenScreen(),
     StockScreen(),
     ShiftScreen(),
@@ -33,6 +26,7 @@ class _EmployeeHomeState extends State<EmployeeHome> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      /* ------------------------------------------------------------  App-bar */
       appBar: AppBar(
         title: const Text('[Employee] Home'),
         actions: [
@@ -42,17 +36,21 @@ class _EmployeeHomeState extends State<EmployeeHome> {
           ),
         ],
       ),
-      body: pages[idx],
+
+      /* ------------------------------------------------------------  Body */
+      body: _pages[_index],
+
+      /* ------------------------------------------------------------  Nav-bar */
       bottomNavigationBar: NavigationBar(
-        selectedIndex: idx,
-        onDestinationSelected: (value) => setState(() => idx = value),
+        selectedIndex: _index,
+        onDestinationSelected: (value) => setState(() => _index = value),
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.restaurant),
             label: 'Kitchen',
           ),
           NavigationDestination(
-            icon: Icon(Icons.inventory),
+            icon: Icon(Icons.inventory_2),
             label: 'Stock',
           ),
           NavigationDestination(

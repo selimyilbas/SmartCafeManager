@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../providers/shift_provider.dart';
 
 class ShiftScreen extends StatelessWidget {
@@ -8,17 +9,43 @@ class ShiftScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final shift = context.watch<ShiftProvider>();
+
+    /*──────────  Mesai bitirirken onay diyaloğu  ──────────*/
+    Future<void> _endShift() async {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Mesaiyi bitir'),
+          content: const Text(
+              'Mesainizi sonlandırmak istediğinize emin misiniz?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('İptal'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Evet'),
+            ),
+          ],
+        ),
+      );
+
+      if (ok == true) shift.clockOut();
+    }
+
+    /*──────────  Ekran  ──────────*/
     return Center(
       child: shift.activeShiftId == null
-          ? ElevatedButton.icon(
+          ? FilledButton.icon(
               icon: const Icon(Icons.login),
-              label: const Text('Mesaie Başla'),
-              onPressed: () => shift.clockIn(),
+              label: const Text('Mesaiye Başla'),
+              onPressed: shift.clockIn,
             )
-          : ElevatedButton.icon(
+          : FilledButton.icon(
               icon: const Icon(Icons.logout),
-              label: const Text('Mesaie Bitir'),
-              onPressed: () => shift.clockOut(),
+              label: const Text('Mesaiyi Bitir'),
+              onPressed: _endShift,
             ),
     );
   }

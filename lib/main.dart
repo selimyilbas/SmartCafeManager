@@ -6,12 +6,14 @@ import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/table_provider.dart';
 import 'providers/cart_provider.dart';
-import 'providers/shift_provider.dart'; // 🆕 ShiftProvider eklendi
+import 'providers/shift_provider.dart';
+import 'providers/kitchen_provider.dart';
+import 'providers/stock_provider.dart'; // ✅ StockProvider eklendi
 
 import 'root_gate.dart';
 import 'screens/login_screen.dart';
 import 'screens/role/customer_home.dart';
-import 'screens/role/employee_home.dart'; // 🆕 Employee home eklendi
+import 'screens/role/employee_home.dart';
 import 'screens/menu_screen.dart';
 import 'screens/cart_screen.dart';
 
@@ -33,7 +35,9 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => TableProvider()),
         ChangeNotifierProvider(create: (_) => CartProvider()),
-        ChangeNotifierProvider(create: (_) => ShiftProvider()), // 🆕 ShiftProvider burada
+        ChangeNotifierProvider(create: (_) => ShiftProvider()),
+        ChangeNotifierProvider(create: (_) => KitchenProvider()),
+        ChangeNotifierProvider(create: (_) => StockProvider()), // ✅ StockProvider burada
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -47,7 +51,7 @@ class MyApp extends StatelessWidget {
           '/': (_) => const RootGate(),
           '/login': (_) => const LoginScreen(),
           '/customerHome': (_) => const CustomerHome(),
-          '/employeeHome': (_) => const EmployeeHome(), // 🆕 route tanımı eklendi
+          '/employeeHome': (_) => const EmployeeHome(),
           '/menu': (_) => const MenuScreen(),
           '/cart': (_) => const CartScreen(),
         },
