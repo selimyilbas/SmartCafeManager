@@ -8,20 +8,18 @@ import '../providers/cart_provider.dart';
 
 class OrderService {
   final _db = FirebaseFirestore.instance;
+  final _col = FirebaseFirestore.instance.collection('orders');
 
   /// Sipariş oluştur (Customer tarafından)
   Future<void> createOrder(
       BuildContext context, List<CartEntry> entries) async {
-    // 1) Aktif masa
     final tableId = context.read<TableProvider>().tableId;
     if (tableId == null) {
       throw 'Masa seçilmedi (tableId null)';
     }
 
-    // 2) Siparişi veren kullanıcı
     final uid = FirebaseAuth.instance.currentUser!.uid;
 
-    // 3) Sepet öğelerini dönüştür
     final items = entries
         .map((e) => {
               'itemId': e.item.id,
@@ -33,7 +31,6 @@ class OrderService {
             })
         .toList();
 
-    // 4) Firestore’a yaz
     await _db.collection('orders').add({
       'tableId': tableId,
       'ownerUserId': uid,
@@ -69,4 +66,11 @@ class OrderService {
     }
     await ref.update(data);
   }
+
+  /// 🆕 Aktif (ödenmemiş) siparişleri tabloya göre getir
+  Stream<QuerySnapshot<Map<String, dynamic>>> streamByTable(String tableId) =>
+      _col
+          .where('tableId', isEqualTo: tableId)
+          .where('status', isNotEqualTo: 'paid')
+          .snapshots();
 }

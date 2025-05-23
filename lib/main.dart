@@ -9,6 +9,7 @@ import 'providers/cart_provider.dart';
 import 'providers/shift_provider.dart';
 import 'providers/kitchen_provider.dart';
 import 'providers/stock_provider.dart'; // ✅ StockProvider eklendi
+import 'providers/table_monitor_provider.dart';
 
 import 'root_gate.dart';
 import 'screens/login_screen.dart';
@@ -38,6 +39,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ShiftProvider()),
         ChangeNotifierProvider(create: (_) => KitchenProvider()),
         ChangeNotifierProvider(create: (_) => StockProvider()), // ✅ StockProvider burada
+        ChangeNotifierProvider(create: (_) => TableMonitorProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

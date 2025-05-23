@@ -37,4 +37,20 @@ class TableService {
       }, SetOptions(merge: true));
     });
   }
+
+  /// 🔁 Dolu masaları dinle (monitor ekranı için)
+  Stream<QuerySnapshot<Map<String, dynamic>>> streamBusyTables() {
+    return _db
+        .collection('tables')
+        .where('activeGuests', isGreaterThan: 0)
+        .snapshots();
+  }
+
+  /// ⛔️ Masayı zorla boşalt
+  Future<void> forceClear(String tableId) async {
+    await _db.collection('tables').doc(tableId).update({
+      'activeGuests': 0,
+      'status': 'available',
+    });
+  }
 }

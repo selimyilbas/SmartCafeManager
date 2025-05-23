@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../../providers/auth_provider.dart' as app_auth;
+
 import '../employee/kitchen_screen.dart';
 import '../employee/stock_screen.dart';
+import '../employee/table_monitor_screen.dart';
 import '../employee/shift_screen.dart';
 
 class EmployeeHome extends StatefulWidget {
@@ -14,36 +15,34 @@ class EmployeeHome extends StatefulWidget {
 }
 
 class _EmployeeHomeState extends State<EmployeeHome> {
-  /* ------------------------------------------------------------  Bottom-nav */
+  /* ----------------------------- bottom-nav state */
   int _index = 0;
 
-  static const _pages = [
+  static const _pages = <Widget>[
     KitchenScreen(),
     StockScreen(),
+    TableMonitorScreen(),
     ShiftScreen(),
   ];
 
+  /* ------------------------------------ widget */
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      /* ------------------------------------------------------------  App-bar */
       appBar: AppBar(
         title: const Text('[Employee] Home'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () => context.read<app_auth.AuthProvider>().signOut(),
+            onPressed: () =>
+                context.read<app_auth.AuthProvider>().signOut(),
           ),
         ],
       ),
-
-      /* ------------------------------------------------------------  Body */
       body: _pages[_index],
-
-      /* ------------------------------------------------------------  Nav-bar */
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
-        onDestinationSelected: (value) => setState(() => _index = value),
+        onDestinationSelected: (v) => setState(() => _index = v),
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.restaurant),
@@ -52,6 +51,10 @@ class _EmployeeHomeState extends State<EmployeeHome> {
           NavigationDestination(
             icon: Icon(Icons.inventory_2),
             label: 'Stock',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.chair_alt),
+            label: 'Tables',
           ),
           NavigationDestination(
             icon: Icon(Icons.access_time),
