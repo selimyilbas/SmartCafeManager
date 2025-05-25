@@ -3,11 +3,15 @@ import '../services/table_service.dart';
 
 class TableProvider extends ChangeNotifier {
   String? tableId;
+  String? sessionId;
+
   final _service = TableService();
+
   String? get currentTableId => tableId;
+  String? get currentSessionId => sessionId;
 
   Future<bool> join(String id) async {
-    await _service.joinTable(id);
+    sessionId = await _service.joinTable(id);
     tableId = id;
     notifyListeners();
     return true;
@@ -16,8 +20,9 @@ class TableProvider extends ChangeNotifier {
   Future<void> leave() async {
     if (tableId != null) {
       await _service.leaveTable(tableId!);
-      tableId = null;
-      notifyListeners();
     }
+    tableId = null;
+    sessionId = null;
+    notifyListeners();
   }
 }
