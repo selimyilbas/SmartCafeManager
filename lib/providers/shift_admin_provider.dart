@@ -1,13 +1,16 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../services/shift_admin_service.dart';
 
+/// Manager’ın tüm employee’leri ve onların shift geçmişlerini dinler.
 class ShiftAdminProvider extends ChangeNotifier {
-  Stream<QuerySnapshot<Map<String, dynamic>>> shiftsFor(DateTime day) {
-    final start = Timestamp.fromDate(DateTime(day.year, day.month, day.day));
-    final end   = Timestamp.fromDate(start.toDate().add(const Duration(days: 1)));
-    return FirebaseFirestore.instance
-        .collectionGroup('shifts')
-        .where('in', isGreaterThan: start, isLessThan: end)
-        .snapshots();
+  final _srv = ShiftAdminService();
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> streamEmployees() {
+    return _srv.streamEmployees();
+  }
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> streamShifts(String uid) {
+    return _srv.streamShifts(uid);
   }
 }

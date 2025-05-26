@@ -1,37 +1,53 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
+import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/shift_service.dart';
-import 'call_provider.dart'; // 🆕 çağrı desteği için
 
+/// Çalışanın kendi aktif shift’ini takip eder, clockIn/clockOut işlemlerini yapar.
 class ShiftProvider extends ChangeNotifier {
-  final _service = ShiftService();
+  final _srv  = ShiftService();
+  final _auth = FirebaseAuth.instance;
+
   String? activeShiftId;
+  late final StreamSubscription<QuerySnapshot<Map<String, dynamic>>> _sub;
 
-  final _calls = CallProvider(); // 🆕
-
-  // Global context gerekiyor — app başlatılırken alınmalı (örn. navigatorKey.currentContext!)
-  late BuildContext _appCtx;
-
-  void setAppContext(BuildContext ctx) {
-    _appCtx = ctx;
+  ShiftProvider() {
+    final uid = _auth.currentUser?.uid;
+    if (uid != null) {
+      _sub = _srv.streamMyShifts(uid).listen((snap) {
+        // İlk endedAt == null dökümanını bul
+        QueryDocumentSnapshot<Map<String, dynamic>>? openDoc;
+        for (var doc in snap.docs) {
+          if (doc.data()['endedAt'] == null) {
+            openDoc = doc;
+            break;
+          }
+        }
+        final newActive = openDoc?.id;
+        if (newActive != activeShiftId) {
+          activeShiftId = newActive;
+          notifyListeners();
+        }
+      });
+    }
   }
 
   Future<void> clockIn() async {
-    if (activeShiftId != null) return;
-    final ref = await _service.startShift();
-    activeShiftId = ref.id;
-    notifyListeners();
-
-    // 🆕 Çağrı dinlemeyi başlat
-    _calls.startListening(_appCtx);
+    final uid = _auth.currentUser!.uid;
+    await _srv.startShift(uid);
   }
 
   Future<void> clockOut() async {
-    if (activeShiftId == null) return;
-    await _service.endShift(activeShiftId!);
-    activeShiftId = null;
-    notifyListeners();
+    final uid = _auth.currentUser!.uid;
+    if (activeShiftId != null) {
+      await _srv.endShift(uid, activeShiftId!);
+    }
+  }
 
-    // 🆕 Çağrı dinlemeyi durdur
-    _calls.stopListening();
+  @override
+  void dispose() {
+    _sub.cancel();
+    super.dispose();
   }
 }

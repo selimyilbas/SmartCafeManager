@@ -18,7 +18,6 @@ import 'providers/shift_admin_provider.dart';
 import 'providers/stock_admin_provider.dart'; 
 import 'providers/menu_admin_provider.dart';
 import 'providers/staff_admin_provider.dart';
- 
 
 import 'root_gate.dart';
 import 'screens/login_screen.dart';
@@ -50,16 +49,12 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => KitchenProvider()),
         ChangeNotifierProvider(create: (_) => StockProvider()),
         ChangeNotifierProvider(create: (_) => TableMonitorProvider()),
-        // 💼 Manager için ek provider’lar
+        ChangeNotifierProvider(create: (_) => ShiftAdminProvider()),
         ChangeNotifierProvider(create: (_) => DiscountProvider()),
         ChangeNotifierProvider(create: (_) => AnalyticsProvider()),
-        ChangeNotifierProvider(create: (_) => ShiftAdminProvider()),
         ChangeNotifierProvider(create: (_) => StockAdminProvider()),
-        ChangeNotifierProvider(create: (_) => AnalyticsProvider()),
         ChangeNotifierProvider(create: (_) => MenuAdminProvider()),
         ChangeNotifierProvider(create: (_) => StaffAdminProvider()),
-
-
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
