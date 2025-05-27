@@ -1,3 +1,5 @@
+// lib/providers/auth_provider.dart
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -24,9 +26,13 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Kullanıcı çıkışı (logout)
   Future<void> signOut() async {
     await _auth.signOut();
-    notifyListeners(); // kullanıcı logout olduğunda UI güncellenir
+    // Lokal state'i temizleyelim:
+    user = null;
+    role = null;
+    notifyListeners(); // UI güncellensin
   }
 
   /// ✅ Yeni: Kullanıcı kaydı (invite code + role doğrulama)
