@@ -1,18 +1,23 @@
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../services/stock_admin_service.dart';
+import '../services/inventory_service.dart';
 
 class StockAdminProvider extends ChangeNotifier {
-  final _srv = StockAdminService();
+  final _srv = InventoryService();
 
-  Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>> critical() =>
-      _srv.criticalStream().map(
-            (snap) => snap.docs
-                .where((d) =>
-                    (d.data()['stockQty'] ?? 0) <= (d.data()['minQty'] ?? 0))
-                .toList(),
-          );
+  /// Kritik stokta (stockQty ≤ minQty) olan ürünleri server-side değil, client-side filtreleyerek verir.
+  Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>> get critical$ {
+    return _srv.streamCritical();
+  }
 
-  Future<void> setMin(String itemId, int? minQty) =>
-      _srv.setMinQty(itemId, minQty);
+  /// Tüm envanteri (tüm kalemleri) QueryDocumentSnapshot listesi olarak döner.
+  Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>> get allItems$ {
+    return _srv.streamInventory().map((snap) => snap.docs);
+  }
+
+  /// Stoğu birebir ayarlar
+  Future<void> setStockQty(String id, int qty) => _srv.setStockQty(id, qty);
+
+  /// Kritik eşiği (minQty) ayarlar
+  Future<void> setMinQty(String id, int minQty) => _srv.updateMinQty(id, minQty);
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';        // ← EKLENDİ
 import '../../providers/stock_provider.dart';
 
 class StockScreen extends StatelessWidget {
@@ -9,7 +10,6 @@ class StockScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final prov = context.watch<StockProvider>();
 
-    /*──── uz. bas → manuel sayı ────*/
     Future<void> _showAdjustDialog(String id) async {
       final ctrl = TextEditingController();
       final delta = await showDialog<int>(
@@ -19,8 +19,9 @@ class StockScreen extends StatelessWidget {
           content: TextField(
             controller: ctrl,
             keyboardType: TextInputType.number,
-            decoration:
-                const InputDecoration(hintText: 'Artış (+) ya da azalış (–)'),
+            decoration: const InputDecoration(
+              hintText: 'Artış (+) ya da azalış (–)',
+            ),
           ),
           actions: [
             TextButton(
@@ -33,15 +34,15 @@ class StockScreen extends StatelessWidget {
                 Navigator.pop(ctx, v);
               },
               child: const Text('Uygula'),
-            )
+            ),
           ],
         ),
       );
-      if (delta != null && delta != 0) prov.adjust(id, delta);
+      if (delta != null && delta != 0) await prov.adjust(id, delta);
     }
 
-    return StreamBuilder(
-      stream: prov.stream(),
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: prov.inventory$,   // güncel stream adı
       builder: (context, snap) {
         if (!snap.hasData) {
           return const Center(child: CircularProgressIndicator());
@@ -54,9 +55,9 @@ class StockScreen extends StatelessWidget {
           itemCount: docs.length,
           separatorBuilder: (_, __) => const Divider(height: 1),
           itemBuilder: (_, i) {
-            final d   = docs[i].data();
-            final id  = docs[i].id;
-            final name = d['name'];
+            final d    = docs[i].data();
+            final id   = docs[i].id;
+            final name = (d['name'] as String?) ?? id;
             final qty  = (d['stockQty'] ?? 0) as int;
 
             return ListTile(
@@ -64,10 +65,13 @@ class StockScreen extends StatelessWidget {
               leading: GestureDetector(
                 onLongPress: () => _showAdjustDialog(id),
                 child: CircleAvatar(
-                  backgroundColor:
-                      qty == 0 ? Colors.red.shade200 : Colors.green.shade100,
-                  child: Text(qty.toString(),
-                      style: const TextStyle(fontWeight: FontWeight.w600)),
+                  backgroundColor: qty == 0
+                      ? Colors.red.shade200
+                      : Colors.green.shade100,
+                  child: Text(
+                    qty.toString(),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
                 ),
               ),
               trailing: Row(

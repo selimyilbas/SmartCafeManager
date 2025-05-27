@@ -1,15 +1,19 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../services/stock_service.dart';
+import '../services/inventory_service.dart';
 
 class StockProvider extends ChangeNotifier {
-  final _srv = StockService();
+  final InventoryService _srv = InventoryService();
 
-  Stream<QuerySnapshot<Map<String, dynamic>>> stream() => _srv.stream();
+  /// Tüm envanteri dinler
+  Stream<QuerySnapshot<Map<String, dynamic>>> get inventory$ => _srv.streamInventory();
 
-  Future<void> inc(String id)   => _srv.adjust(id,  1);
-  Future<void> dec(String id)   => _srv.adjust(id, -1);
+  /// Stoğu +1 artırır
+  Future<void> inc(String id) => _srv.adjust(id, 1);
 
-  /// ± 10 / ± 50 / özel sayı için
+  /// Stoğu -1 azaltır
+  Future<void> dec(String id) => _srv.adjust(id, -1);
+
+  /// Stoğu delta kadar (±) günceller
   Future<void> adjust(String id, int delta) => _srv.adjust(id, delta);
 }
