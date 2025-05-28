@@ -11,6 +11,8 @@ import 'providers/kitchen_provider.dart';
 import 'providers/stock_provider.dart';
 import 'providers/table_monitor_provider.dart';
 
+
+
 // 💼 Manager modülü provider’ları
 import 'providers/discount_provider.dart';
 import 'providers/analytics_provider.dart';
@@ -18,6 +20,9 @@ import 'providers/shift_admin_provider.dart';
 import 'providers/stock_admin_provider.dart'; 
 import 'providers/menu_admin_provider.dart';
 import 'providers/staff_admin_provider.dart';
+
+
+
 
 import 'root_gate.dart';
 import 'screens/login_screen.dart';
