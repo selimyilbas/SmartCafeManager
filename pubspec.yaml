@@ -40,7 +40,9 @@ dependencies:
   intl: ^0.18.1
   cloud_firestore: ^5.6.8
   uuid: ^3.0.7
+  badges: ^3.0.2
   flutter_barcode_scanner: ^2.0.0
+  another_flushbar: ^1.10.24
 
 dev_dependencies:
   flutter_test:

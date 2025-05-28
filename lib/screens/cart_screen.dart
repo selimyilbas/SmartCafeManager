@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../providers/cart_provider.dart';
+
+import '../providers/cart_provider.dart';
+import '../providers/table_provider.dart';
+import '../services/order_service.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
@@ -8,89 +11,118 @@ class CartScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cartProv = context.watch<CartProvider>();
-    final items   = cartProv.items;
+    final tableProv = context.watch<TableProvider>();
+    final orderSrv = OrderService();
+
+    Future<void> _sendOrder() async {
+      if (tableProv.tableId == null || tableProv.sessionId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Önce masaya oturun')),
+        );
+        return;
+      }
+      if (cartProv.items.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Sepet boş')),
+        );
+        return;
+      }
+      try {
+        await orderSrv.createOrder(context, cartProv.items);
+        cartProv.clear();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Sipariş gönderildi ✅')),
+        );
+        Navigator.of(context).pop();
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Sipariş gönderilemedi: $e')),
+        );
+      }
+    }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Sepet')),
+      appBar: AppBar(
+        title: const Text('Sepet'),
+        leading: BackButton(onPressed: () => Navigator.of(context).pop()),
+      ),
       body: Column(
         children: [
-          // 1) Sepet Listesi
+          // 1) Sepet öğeleri
           Expanded(
-            child: items.isEmpty
-                ? const Center(child: Text('Sepet boş'))
+            child: cartProv.items.isEmpty
+                ? const Center(child: Text('Sepetiniz boş'))
                 : ListView.separated(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    itemCount: items.length,
-                    separatorBuilder: (_, __) =>
-                        const Divider(height: 1),
+                    padding: const EdgeInsets.only(top: 8),
+                    itemCount: cartProv.items.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
                     itemBuilder: (_, i) {
-                      final e    = items[i];
-                      final cost = e.item.price * e.qty;
-                      final opts = e.chosen.entries
-                          .map((o) => '${o.key}: ${o.value}')
-                          .join(', ');
-                      final subtitle = [
-                        if (opts.isNotEmpty) opts,
-                        if (e.note.trim().isNotEmpty) 'Not: ${e.note}',
-                      ].join(' • ');
-
+                      final entry = cartProv.items[i];
                       return ListTile(
                         leading: CircleAvatar(
-                          child: Text('${e.qty}'),
+                          backgroundColor: Colors.green.shade100,
+                          child: Text(
+                            entry.qty.toString(),
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
                         ),
-                        title: Text(e.item.name),
-                        subtitle: subtitle.isNotEmpty
-                            ? Text(subtitle)
-                            : null,
+                        title: Text(entry.item.name),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (entry.chosen.isNotEmpty)
+                              Text(entry.chosen.entries
+                                  .map((e) => '${e.key}: ${e.value}')
+                                  .join(', ')),
+                            if (entry.note.isNotEmpty)
+                              Text('Not: ${entry.note}',
+                                  style: const TextStyle(fontStyle: FontStyle.italic)),
+                          ],
+                        ),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            // Sil butonu
                             IconButton(
                               icon: const Icon(Icons.delete_outline),
-                              onPressed: () =>
-                                  cartProv.remove(e),
+                              onPressed: () => cartProv.remove(entry),
                             ),
-                            // Adet azalt
                             IconButton(
                               icon: const Icon(Icons.remove_circle_outline),
-                              onPressed: () =>
-                                  cartProv.changeQty(e, -1),
+                              onPressed: () => cartProv.dec(entry),
                             ),
-                            Text('${e.qty}',
-                                style: const TextStyle(fontSize: 16)),
-                            // Adet artır
                             IconButton(
                               icon: const Icon(Icons.add_circle_outline),
-                              onPressed: () =>
-                                  cartProv.changeQty(e, 1),
+                              onPressed: () => cartProv.inc(entry),
                             ),
                           ],
                         ),
-                        // İstersen alt satırda toplam maliyeti de gösterebilirsin:
-                        // subtitle: Text('Toplam: ₺$cost'),
                       );
                     },
                   ),
           ),
 
-          // 2) Alt Toplam ve Gönder Butonu
+          // 2) Toplam ve sipariş gönder butonu
           Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
               children: [
-                Text('Toplam: ₺${cartProv.total.toStringAsFixed(2)}',
+                Expanded(
+                  child: Text(
+                    'Toplam: ₺${cartProv.total.toStringAsFixed(2)}',
                     style: const TextStyle(
-                        fontSize: 20, fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center),
-                const SizedBox(height: 12),
-                FilledButton(
-                  onPressed: items.isNotEmpty
-                      ? () {
-                          // TODO: Sipariş gönderme işlemini burada başlat
-                        }
-                      : null,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: _sendOrder,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24)),
+                  ),
                   child: const Text('Siparişi Gönder'),
                 ),
               ],
