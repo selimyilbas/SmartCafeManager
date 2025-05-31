@@ -1,34 +1,49 @@
+// lib/services/menu_admin_service.dart
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/menu_item.dart';
 
 class MenuAdminService {
   final _col = FirebaseFirestore.instance.collection('menu');
 
-  /// artık tek argümanlı factory’yi kullanıyoruz
-  Stream<List<MenuItem>> streamMenu() =>
-      _col.snapshots().map(
-            (snap) => snap.docs.map((doc) => MenuItem.fromDoc(doc)).toList(),
-          );
+  /// Menü koleksiyonunun QuerySnapshot'ını stream olarak döner (isim sırasına göre)
+  Stream<QuerySnapshot<Map<String, dynamic>>> streamMenuSnapshots() {
+    return _col.orderBy('name').snapshots();
+  }
 
-  Future<void> addItem(MenuItem item)    => _col.add(item.toJson());
-  Future<void> updateItem(MenuItem item) => _col.doc(item.id).update(item.toJson());
-  Future<void> deleteItem(String id)     => _col.doc(id).delete();
+  /// Yeni bir ürün eklemek için: doküman ID olarak item.id kullanıyoruz
+  Future<void> addItem(MenuItem item) {
+    return _col.doc(item.id).set(item.toJson());
+  }
 
+  /// Mevcut ürünü güncellemek için
+  Future<void> updateItem(MenuItem item) {
+    return _col.doc(item.id).update(item.toJson());
+  }
+
+  /// Ürünü silmek için
+  Future<void> deleteItem(String id) {
+    return _col.doc(id).delete();
+  }
+
+  /// Sadece minQty değerini güncellemek için
+  Future<void> setMinQty(String itemId, int minQty) {
+    return _col.doc(itemId).update({'minQty': minQty});
+  }
+
+  /// (Opsiyonel) Ürüne indirim eklemek isterseniz
   Future<void> setDiscount({
     required String itemId,
     required double percent,
     required DateTime from,
     required DateTime to,
-  }) =>
-      _col.doc(itemId).update({
-        'discount': {
-          'percent': percent,
-          'from':    Timestamp.fromDate(from),
-          'to':      Timestamp.fromDate(to),
-        },
-      });
-
-  /// **Yeni**: minimum stok adedini güncellemek için
-  Future<void> setMinQty(String itemId, int minQty) =>
-      _col.doc(itemId).update({'minQty': minQty});
+  }) {
+    return _col.doc(itemId).update({
+      'discount': {
+        'percent': percent,
+        'from':    Timestamp.fromDate(from),
+        'to':      Timestamp.fromDate(to),
+      },
+    });
+  }
 }

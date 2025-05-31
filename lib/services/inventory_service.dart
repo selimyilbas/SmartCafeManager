@@ -1,10 +1,12 @@
+// lib/services/inventory_service.dart
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class InventoryService {
   final _db = FirebaseFirestore.instance;
 
-  /// 1) Tüm envanteri stream olarak dinler
-  Stream<QuerySnapshot<Map<String, dynamic>>> streamInventory() {
+  /// 1) Tüm envanteri QuerySnapshot olarak stream halinde dinler
+  Stream<QuerySnapshot<Map<String, dynamic>>> streamInventorySnapshots() {
     return _db
         .collection('inventory')
         .orderBy('name')
@@ -22,22 +24,22 @@ class InventoryService {
   /// 3) Kritik eşiğin (minQty) güncelleneceği metot
   Future<void> updateMinQty(String id, int minQty) {
     return _db.collection('inventory').doc(id).update({
-      'minQty': minQty,
-      'updatedAt': FieldValue.serverTimestamp(),
+      'minQty':     minQty,
+      'updatedAt':  FieldValue.serverTimestamp(),
     });
   }
 
   /// 4) Belirli stoğu birebir ayarlamak istersen
   Future<void> setStockQty(String id, int qty) {
     return _db.collection('inventory').doc(id).update({
-      'stockQty': qty,
-      'updatedAt': FieldValue.serverTimestamp(),
+      'stockQty':   qty,
+      'updatedAt':  FieldValue.serverTimestamp(),
     });
   }
 
   /// 5) Stream’den client-side filtre yaparak kritik stokları döner
   Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>> streamCritical() {
-    return streamInventory().map((snap) {
+    return streamInventorySnapshots().map((snap) {
       return snap.docs.where((doc) {
         final data  = doc.data();
         final stock = (data['stockQty'] ?? 0) as num;
