@@ -1,8 +1,12 @@
+// lib/main.dart
+
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
 import 'package:provider/provider.dart';
+
+// — Temel provider’lar —
 import 'providers/auth_provider.dart';
 import 'providers/table_provider.dart';
 import 'providers/cart_provider.dart';
@@ -11,24 +15,19 @@ import 'providers/kitchen_provider.dart';
 import 'providers/stock_provider.dart';
 import 'providers/table_monitor_provider.dart';
 
-
-
-// 💼 Manager modülü provider’ları
+// — Yönetici (Admin) modülü provider’ları —
 import 'providers/discount_provider.dart';
 import 'providers/analytics_provider.dart';
 import 'providers/shift_admin_provider.dart';
-import 'providers/stock_admin_provider.dart'; 
+import 'providers/stock_admin_provider.dart';
 import 'providers/menu_admin_provider.dart';
 import 'providers/staff_admin_provider.dart';
-
-
-
 
 import 'root_gate.dart';
 import 'screens/login_screen.dart';
 import 'screens/role/customer_home.dart';
 import 'screens/role/employee_home.dart';
-import 'screens/role/manager_home.dart'; // 💼 Manager ana ekran
+import 'screens/role/manager_home.dart'; // Manager ana ekran
 import 'screens/menu_screen.dart';
 import 'screens/cart_screen.dart';
 
@@ -47,6 +46,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        // — Temel sağlayıcılar —
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => TableProvider()),
         ChangeNotifierProvider(create: (_) => CartProvider()),
@@ -54,6 +54,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => KitchenProvider()),
         ChangeNotifierProvider(create: (_) => StockProvider()),
         ChangeNotifierProvider(create: (_) => TableMonitorProvider()),
+
+        // — Yönetici (Admin) modülü sağlayıcıları —
         ChangeNotifierProvider(create: (_) => ShiftAdminProvider()),
         ChangeNotifierProvider(create: (_) => DiscountProvider()),
         ChangeNotifierProvider(create: (_) => AnalyticsProvider()),
@@ -74,7 +76,7 @@ class MyApp extends StatelessWidget {
           '/login': (_) => const LoginScreen(),
           '/customerHome': (_) => const CustomerHome(),
           '/employeeHome': (_) => const EmployeeHome(),
-          '/manager': (_) => const ManagerHome(), // 💼 Manager yönlendirmesi
+          '/manager': (_) => const ManagerHome(), // Manager ana ekran
           '/menu': (_) => const MenuScreen(),
           '/cart': (_) => const CartScreen(),
         },
