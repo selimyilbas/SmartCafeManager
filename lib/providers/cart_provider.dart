@@ -1,23 +1,35 @@
+// lib/providers/cart_provider.dart
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../models/menu_item.dart';
 
+/// Sepet içindeki her bir satırı temsil eder.
+/// • item: MenuItem (ürün bilgisi)
+/// • chosen: { "optionName": "value", … } şeklinde user’ın seçtiği opsiyonlar
+/// • note: Kullanıcının eklediği not (örn. “Az şekerli” vb.)
+/// • qty: Kaç adet seçildiği
 class CartEntry {
   final MenuItem item;
-  final Map<String, String> chosen; // optionName → value
+  final Map<String, String> chosen;
   final String note;
   int qty;
+
   CartEntry(this.item, this.chosen, this.note, this.qty);
 }
 
+/// Sepet yönetimini yapan ChangeNotifier sınıfı.
+/// Sepete ekleme, silme, adet arttırma/azaltma, toplam fiyat hesaplama vb. işlemler burada.
 class CartProvider extends ChangeNotifier {
   final List<CartEntry> _items = [];
+
+  /// Sepet içeriğini readonly olarak döner
   List<CartEntry> get items => List.unmodifiable(_items);
 
-  double get total =>
-      _items.fold(0.0, (sum, e) => sum + e.item.price * e.qty);
+  /// Sepetin toplam fiyatını hesaplar (fiyat * qty)
+  double get total => _items.fold(0.0, (sum, e) => sum + e.item.price * e.qty);
 
-  /// Sepete ekle; aynı entry varsa qty++ yap
+  /// Sepete ekleme; aynısından varsa adet++ yap, yoksa yeni ekle.
   void add(MenuItem item, Map<String, String> chosen, String note) {
     final idx = _items.indexWhere((e) =>
         e.item.id == item.id &&
@@ -31,25 +43,25 @@ class CartProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Tüm sepeti temizle
+  /// Sepeti temizler (tüm satırları siler)
   void clear() {
     _items.clear();
     notifyListeners();
   }
 
-  /// Tek bir entry’i sepetten tamamen çıkar
+  /// Tek satırı tamamen siler
   void remove(CartEntry entry) {
     _items.remove(entry);
     notifyListeners();
   }
 
-  /// Bir entry’nin miktarını 1 arttır
+  /// Bir satırın qty’sini 1 arttırır
   void inc(CartEntry entry) {
     entry.qty++;
     notifyListeners();
   }
 
-  /// Bir entry’nin miktarını 1 azalt; 0 olursa tamamen sil
+  /// Bir satırın qty’sini 1 azaltır; eğer 1’den 0’a inerse tamamen siler
   void dec(CartEntry entry) {
     if (entry.qty > 1) {
       entry.qty--;

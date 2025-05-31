@@ -12,10 +12,10 @@ class OrderService {
   final _db  = FirebaseFirestore.instance;
   final _col = FirebaseFirestore.instance.collection('orders');
 
-  /// Helper to get current user UID (or empty if none)
+  /// Helper: o anki oturum açmış kullanıcının UID’sini döner.
   String get uid => FirebaseAuth.instance.currentUser?.uid ?? '';
 
-  /// Create a new order document under `/orders`
+  /// 1) Yeni bir sipariş oluşturmak için: CartProvider’dan gelen entries’ı Firestore’a yazar.
   Future<void> createOrder(BuildContext ctx, List<CartEntry> entries) async {
     final tableProv = ctx.read<TableProvider>();
     final tableId   = tableProv.tableId;
@@ -25,56 +25,63 @@ class OrderService {
       throw 'Masa oturumu bulunamadı';
     }
 
-    // Build items list
+    // Her CartEntry’i firestore’daki "items" alanına uygun map’e çeviriyoruz
     final items = entries.map((e) {
       return {
-        'itemId':   e.item.id,
-        'name':     e.item.name,
-        'qty':      e.qty,
-        'price':    e.item.price,
-        'options':  e.chosen,
-        'note':     e.note,
+        'itemId':  e.item.id,
+        'name':    e.item.name,
+        'qty':     e.qty,
+        'price':   e.item.price,
+        'options': e.chosen,
+        'note':    e.note,
       };
     }).toList();
 
-    // Add a new order doc
     await _col.add({
-      'tableId':    tableId,
-      'sessionId':  sessionId,
-      'ownerUid':   uid,
-      'status':     'pending',
-      'createdAt':  FieldValue.serverTimestamp(),
-      'items':      items,
+      'tableId':   tableId,
+      'sessionId': sessionId,
+      'ownerUid':  uid,
+      'status':    'pending',
+      'createdAt': FieldValue.serverTimestamp(),
+      'items':     items,
     });
   }
 
-  /// Stream orders by kitchen status (pending, preparing, ready, paid…)
+  /// 2) Müşterinin (ownerUid == uid) geçmiş siparişlerini stream olarak döner.
+  Stream<QuerySnapshot<Map<String, dynamic>>> streamUserOrders() {
+    return _col
+        .where('ownerUid', isEqualTo: uid)
+        .orderBy('createdAt', descending: true)
+        .snapshots();
+  }
+
+  /// 3) Mutfak tarafı (kitchen) için; duruma göre siparişleri stream’ler.
   Stream<QuerySnapshot<Map<String, dynamic>>> streamByStatus(String status) {
     return _col
-      .where('status', isEqualTo: status)
-      .orderBy('createdAt')
-      .snapshots();
+        .where('status', isEqualTo: status)
+        .orderBy('createdAt')
+        .snapshots();
   }
 
-  /// Stream active (non-paid) orders for a given table session
+  /// 4) Bir masadaki (aktif, ödenmemiş) siparişleri getirir.
   Stream<QuerySnapshot<Map<String, dynamic>>> streamActiveOrders(
-      String tableId,
-      String sessionId,
+    String tableId,
+    String sessionId,
   ) {
     return _col
-      .where('tableId',   isEqualTo: tableId)
-      .where('sessionId', isEqualTo: sessionId)
-      .where('status',    whereIn: ['pending','preparing','ready'])
-      .snapshots();
+        .where('tableId',   isEqualTo: tableId)
+        .where('sessionId', isEqualTo: sessionId)
+        .where('status',    whereIn: ['pending', 'preparing', 'ready'])
+        .snapshots();
   }
 
-  /// Update an order’s status and add timestamps
+  /// 5) Sipariş durumunu güncelleme (preparing, ready, paid vb.).
   Future<void> updateStatus({
     required String orderId,
     required String newStatus,
   }) async {
     final ref = _col.doc(orderId);
-    final data = <String, Object?>{ 'status': newStatus };
+    final data = <String, Object?>{'status': newStatus};
 
     if (newStatus == 'preparing') {
       data['startedAt'] = FieldValue.serverTimestamp();
@@ -89,15 +96,15 @@ class OrderService {
     await ref.update(data);
   }
 
-  /// Mark an order as paid
+  /// 6) Siparişi “paid” olarak işaretleme
   Future<void> markPaid(String orderId) {
     return _col.doc(orderId).update({
-      'status':  'paid',
-      'paidAt':  FieldValue.serverTimestamp(),
+      'status': 'paid',
+      'paidAt': FieldValue.serverTimestamp(),
     });
   }
 
-  /// Compute total cost for all active (non-paid) orders of a session
+  /// 7) Aktif (paid olmayan) siparişlerin masaya toplam fiyatını hesaplama
   Future<double> totalCost(String tableId, String sessionId) async {
     final snap = await streamActiveOrders(tableId, sessionId).first;
     return snap.docs.fold<double>(0, (sum, d) {
@@ -105,23 +112,23 @@ class OrderService {
       final orderTotal = items.fold<double>(
         0,
         (p, it) =>
-          p +
-          ((it['qty']   as num?)?.toDouble() ?? 0) *
-          ((it['price'] as num?)?.toDouble() ?? 0),
+            p +
+            ((it['qty']   as num?)?.toDouble() ?? 0) *
+            ((it['price'] as num?)?.toDouble() ?? 0),
       );
       return sum + orderTotal;
     });
   }
 
-  /// Compute total from a single order map
+  /// 8) “Tek” bir sipariş objesinin içinden toplam fiyatı hesaplamak isterseniz
   double totalCostFromData(Map<String, dynamic> od) {
     final items = od['items'] as List;
     return items.fold<double>(
       0,
       (p, it) =>
-        p +
-        ((it['qty']   as num?)?.toDouble() ?? 0) *
-        ((it['price'] as num?)?.toDouble() ?? 0),
+          p +
+          ((it['qty']   as num?)?.toDouble() ?? 0) *
+          ((it['price'] as num?)?.toDouble() ?? 0),
     );
   }
 }

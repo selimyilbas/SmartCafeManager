@@ -1,8 +1,11 @@
+// lib/screens/role/customer_home.dart
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
 import '../../providers/table_provider.dart';
+import '../../providers/order_provider.dart';    // **Yeni**: OrderProvider
 import '../../services/call_service.dart';
 
 import '../scan_table_screen.dart';
@@ -26,14 +29,28 @@ class CustomerHome extends StatelessWidget {
       appBar: AppBar(
         title: const Text('[Customer] Home'),
         actions: [
-          PopupMenuButton(
+          PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert),
             itemBuilder: (_) => const [
-              PopupMenuItem(value: 'leave', child: Text('Masadan Kalk')),
-              PopupMenuItem(value: 'logout', child: Text('Çıkış Yap')),
+              PopupMenuItem(
+                value: 'pastOrders',
+                child: Text('Geçmiş Siparişler'),
+              ),
+              PopupMenuItem(
+                value: 'leave',
+                child: Text('Masadan Kalk'),
+              ),
+              PopupMenuItem(
+                value: 'logout',
+                child: Text('Çıkış Yap'),
+              ),
             ],
             onSelected: (value) async {
               switch (value) {
+                case 'pastOrders':
+                  // “Geçmiş Siparişler” ekranına git
+                  Navigator.pushNamed(context, '/pastOrders');
+                  break;
                 case 'leave':
                   await context.read<TableProvider>().leave();
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -96,7 +113,7 @@ class CustomerHome extends StatelessWidget {
                       MaterialPageRoute(builder: (_) => const PayScreen()),
                     );
                   }
-                : null, // pasif yapar
+                : null, // Masaya oturulmamışsa pasif
           ),
           const SizedBox(height: 12),
           ElevatedButton(
