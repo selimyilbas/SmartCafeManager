@@ -32,14 +32,12 @@ class DashboardScreen extends StatelessWidget {
         title: const Text('[Manager]  📊 Manager Dashboard'),
         centerTitle: true,
       ),
-      // SingleChildScrollView ile dikeyde kaydırılabilir hale getiriyoruz
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // —————————————— 1) Güncel Satış/Hasılat Özeti ——————————————
-
             const Text(
               'Güncel Satış/Hasılat Özeti',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
@@ -49,9 +47,6 @@ class DashboardScreen extends StatelessWidget {
             // KPI kartlarını Wrap ile yerleştiriyoruz; her biri sabit genişlikli olacak
             LayoutBuilder(
               builder: (ctx, constraints) {
-                // İki sütun ve aralarında 12 px boşluk olacak
-                // Toplam yatay padding de (16 + 16) = 32 px olduğu için, 
-                // constraints.maxWidth zaten içerideki boşluğu veriyor.
                 const double cardSpacing = 12;
                 final double totalHorizontalSpacing = cardSpacing;
                 final double cardWidth =
@@ -61,17 +56,20 @@ class DashboardScreen extends StatelessWidget {
                   spacing: cardSpacing,
                   runSpacing: 12,
                   children: [
-                    // 1) Bugünün Toplam Satışı
+                    // 1) Bugünün Toplam Satışı (StreamBuilder)
                     SizedBox(
                       width: cardWidth,
-                      child: FutureBuilder<double>(
-                        future: analyticsProv.getTodaySales(),
+                      child: StreamBuilder<double>(
+                        stream: analyticsProv.todaySales$,
                         builder: (ctx2, snap) {
-                          final text = snap.hasData
-                              ? '${snap.data!.toStringAsFixed(2)} ₺'
-                              : snap.hasError
-                                  ? '–'
-                                  : 'Yükleniyor...';
+                          String text;
+                          if (snap.hasError) {
+                            text = '–';
+                          } else if (!snap.hasData) {
+                            text = 'Yükleniyor...';
+                          } else {
+                            text = '${snap.data!.toStringAsFixed(2)} ₺';
+                          }
                           return _KpiCard(
                             title: 'Bugünün Toplam Satışı',
                             value: text,
@@ -80,17 +78,20 @@ class DashboardScreen extends StatelessWidget {
                       ),
                     ),
 
-                    // 2) Bu Haftanın Toplam Satışı
+                    // 2) Bu Haftanın Toplam Satışı (StreamBuilder)
                     SizedBox(
                       width: cardWidth,
-                      child: FutureBuilder<double>(
-                        future: analyticsProv.getThisWeekSales(),
+                      child: StreamBuilder<double>(
+                        stream: analyticsProv.thisWeekSales$,
                         builder: (ctx2, snap) {
-                          final text = snap.hasData
-                              ? '${snap.data!.toStringAsFixed(2)} ₺'
-                              : snap.hasError
-                                  ? '–'
-                                  : 'Yükleniyor...';
+                          String text;
+                          if (snap.hasError) {
+                            text = '–';
+                          } else if (!snap.hasData) {
+                            text = 'Yükleniyor...';
+                          } else {
+                            text = '${snap.data!.toStringAsFixed(2)} ₺';
+                          }
                           return _KpiCard(
                             title: 'Bu Haftanın Toplam Satışı',
                             value: text,
@@ -99,17 +100,20 @@ class DashboardScreen extends StatelessWidget {
                       ),
                     ),
 
-                    // 3) Bu Ayın Toplam Satışı
+                    // 3) Bu Ayın Toplam Satışı (StreamBuilder)
                     SizedBox(
                       width: cardWidth,
-                      child: FutureBuilder<double>(
-                        future: analyticsProv.getThisMonthSales(),
+                      child: StreamBuilder<double>(
+                        stream: analyticsProv.thisMonthSales$,
                         builder: (ctx2, snap) {
-                          final text = snap.hasData
-                              ? '${snap.data!.toStringAsFixed(2)} ₺'
-                              : snap.hasError
-                                  ? '–'
-                                  : 'Yükleniyor...';
+                          String text;
+                          if (snap.hasError) {
+                            text = '–';
+                          } else if (!snap.hasData) {
+                            text = 'Yükleniyor...';
+                          } else {
+                            text = '${snap.data!.toStringAsFixed(2)} ₺';
+                          }
                           return _KpiCard(
                             title: 'Bu Ayın Toplam Satışı',
                             value: text,
@@ -118,17 +122,20 @@ class DashboardScreen extends StatelessWidget {
                       ),
                     ),
 
-                    // 4) Bugünkü Sipariş Adedi
+                    // 4) Bugünkü Sipariş Adedi (StreamBuilder)
                     SizedBox(
                       width: cardWidth,
-                      child: FutureBuilder<int>(
-                        future: analyticsProv.getTodayOrderCount(),
+                      child: StreamBuilder<int>(
+                        stream: analyticsProv.todayOrderCount$,
                         builder: (ctx2, snap) {
-                          final text = snap.hasData
-                              ? snap.data!.toString()
-                              : snap.hasError
-                                  ? '–'
-                                  : 'Yükleniyor...';
+                          String text;
+                          if (snap.hasError) {
+                            text = '–';
+                          } else if (!snap.hasData) {
+                            text = 'Yükleniyor...';
+                          } else {
+                            text = snap.data!.toString();
+                          }
                           return _KpiCard(
                             title: 'Bugünkü Sipariş Adedi',
                             value: text,
@@ -137,17 +144,20 @@ class DashboardScreen extends StatelessWidget {
                       ),
                     ),
 
-                    // 5) Ortalama Sipariş Tutarı
+                    // 5) Ortalama Sipariş Tutarı (StreamBuilder)
                     SizedBox(
                       width: cardWidth,
-                      child: FutureBuilder<double>(
-                        future: analyticsProv.getAvgOrderValueToday(),
+                      child: StreamBuilder<double>(
+                        stream: analyticsProv.avgOrderValueToday$,
                         builder: (ctx2, snap) {
-                          final text = snap.hasData
-                              ? '${snap.data!.toStringAsFixed(2)} ₺'
-                              : snap.hasError
-                                  ? '–'
-                                  : 'Yükleniyor...';
+                          String text;
+                          if (snap.hasError) {
+                            text = '–';
+                          } else if (!snap.hasData) {
+                            text = 'Yükleniyor...';
+                          } else {
+                            text = '${snap.data!.toStringAsFixed(2)} ₺';
+                          }
                           return _KpiCard(
                             title: 'Ortalama Sipariş Tutarı',
                             value: text,
@@ -156,11 +166,11 @@ class DashboardScreen extends StatelessWidget {
                       ),
                     ),
 
-                    // 6) Günün En Yoğun Saatleri
+                    // 6) Günün En Yoğun Saatleri (StreamBuilder)
                     SizedBox(
                       width: cardWidth,
-                      child: FutureBuilder<List<HourCount>>(
-                        future: analyticsProv.getBusiestHoursToday(),
+                      child: StreamBuilder<List<HourCount>>(
+                        stream: analyticsProv.busiestHoursToday$,
                         builder: (ctx2, snap) {
                           if (snap.hasError) {
                             return _KpiCard(
@@ -179,7 +189,6 @@ class DashboardScreen extends StatelessWidget {
                             );
                           }
                           final List<HourCount> hours = snap.data!;
-                          // İlk 3 saati seçiyoruz
                           final top3 = hours.take(3).toList();
                           final valueText = top3.isEmpty
                               ? 'Veri yok'
@@ -190,7 +199,6 @@ class DashboardScreen extends StatelessWidget {
                                       (hc.hour + 1).toString().padLeft(2, '0');
                                   return '$hStr:00–$nextHour:00 (${hc.count})';
                                 }).join('\n');
-
                           return _KpiCard(
                             title: 'Günün En Yoğun Saatleri',
                             value: valueText,
@@ -208,14 +216,12 @@ class DashboardScreen extends StatelessWidget {
             const SizedBox(height: 24),
 
             // —————————————— 2) Son 30 Gün Gelir Grafiği ——————————————
-
             const Text(
               'Son 30 Gün Gelir (₺)',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 12),
 
-            // Veri akışını StreamBuilder ile dinliyoruz
             StreamBuilder<List<SalesData>>(
               stream: analyticsProv.last30DaysSales,
               builder: (ctx, snapshot) {
@@ -233,20 +239,17 @@ class DashboardScreen extends StatelessWidget {
                   return const Center(child: Text('Veri yok.'));
                 }
 
-                // Y ekseninin maksimumunu 500'ün katına yuvarlıyoruz
                 final double rawMaxY =
                     sales.map((e) => e.total).reduce((a, b) => a > b ? a : b);
                 const double step = 500;
                 final double maxY = ((rawMaxY / step).ceil()) * step;
 
-                // X ekseni için başlangıç tarihini hesaplıyoruz
                 final now = DateTime.now();
                 final startDate = DateTime(now.year, now.month, now.day)
                     .subtract(const Duration(days: 29));
 
-                // Sabit bir yükseklik vererek taşmayı önlüyoruz
                 return SizedBox(
-                  height: 250, // Grafiğin yüksekliğini buradan ayarlayabilirsiniz
+                  height: 250,
                   child: Padding(
                     padding: const EdgeInsets.only(
                       right: 8.0,
@@ -259,7 +262,6 @@ class DashboardScreen extends StatelessWidget {
                         maxX: 29,
                         minY: 0,
                         maxY: maxY,
-
                         gridData: FlGridData(
                           show: true,
                           horizontalInterval: maxY / 5,
@@ -275,15 +277,12 @@ class DashboardScreen extends StatelessWidget {
                             dashArray: [4, 4],
                           ),
                         ),
-
                         borderData: FlBorderData(show: false),
-
                         titlesData: FlTitlesData(
                           topTitles:
                               AxisTitles(sideTitles: SideTitles(showTitles: false)),
                           rightTitles:
                               AxisTitles(sideTitles: SideTitles(showTitles: false)),
-
                           leftTitles: AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true,
@@ -303,7 +302,6 @@ class DashboardScreen extends StatelessWidget {
                               },
                             ),
                           ),
-
                           bottomTitles: AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true,
@@ -328,10 +326,7 @@ class DashboardScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-
-                        // Yeni fl_chart sürümlerinde clipToBorder yerine clipData kullanılıyor:
                         clipData: FlClipData.all(),
-
                         lineBarsData: [
                           LineChartBarData(
                             spots: sales.asMap().entries.map((entry) {
@@ -349,9 +344,6 @@ class DashboardScreen extends StatelessWidget {
                             ),
                           ),
                         ],
-
-                        // **Burada dikkat**: İkinci defa `titlesData:` atamasını kaldırdık.
-                        // Dolayısıyla “duplicate_named_argument” hatası ortadan kalktı.
                       ),
                     ),
                   ),
@@ -368,12 +360,9 @@ class DashboardScreen extends StatelessWidget {
   }
 }
 
-/// —————————————————————————————————————————————————————————————————————————————————————
+/// ─────────────────────────────────────────────────────────────────────────
 ///  Özel Widget: KPI Kart Tasarımı
-///
-///  Tek sorumluluğu: Başlık (title) ve Değer (value) tekstini gösteren basit bir Card.
-///  fontSize ve hizalama (center/left) isteğe göre ayarlanabilir.
-/// —————————————————————————————————————————————————————————————————————————————————————
+/// ─────────────────────────────────────────────────────────────────────────
 class _KpiCard extends StatelessWidget {
   final String title;
   final String value;

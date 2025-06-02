@@ -7,7 +7,11 @@ import '../models/sales_data.dart';
 class AnalyticsProvider extends ChangeNotifier {
   final _orderCol = FirebaseFirestore.instance.collection('orders');
 
-  /// 1) Bugünün Toplam Satışı (TL)
+  //
+  // ──────────────── EXISTING FUTURE METHODS ────────────────
+  //
+
+  /// 1) Bugünün Toplam Satışı (TL) — Future versiyonu
   Future<double> getTodaySales() async {
     final now = DateTime.now();
     final startOfDay = DateTime(now.year, now.month, now.day);
@@ -38,10 +42,9 @@ class AnalyticsProvider extends ChangeNotifier {
     return total;
   }
 
-  /// 2) Bu Haftanın Toplam Satışı (TL)
+  /// 2) Bu Haftanın Toplam Satışı (TL) — Future versiyonu
   Future<double> getThisWeekSales() async {
     final now = DateTime.now();
-    // Hafta başlangıcı: Pazartesi (ISO 8601’e göre)
     final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
     final start = DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day);
     final end = start.add(const Duration(days: 7));
@@ -71,7 +74,7 @@ class AnalyticsProvider extends ChangeNotifier {
     return total;
   }
 
-  /// 3) Bu Ayın Toplam Satışı (TL)
+  /// 3) Bu Ayın Toplam Satışı (TL) — Future versiyonu
   Future<double> getThisMonthSales() async {
     final now = DateTime.now();
     final start = DateTime(now.year, now.month, 1);
@@ -102,7 +105,7 @@ class AnalyticsProvider extends ChangeNotifier {
     return total;
   }
 
-  /// 4) Bugünkü Sipariş Adedi
+  /// 4) Bugünkü Sipariş Adedi — Future versiyonu
   Future<int> getTodayOrderCount() async {
     final now = DateTime.now();
     final startOfDay = DateTime(now.year, now.month, now.day);
@@ -123,7 +126,7 @@ class AnalyticsProvider extends ChangeNotifier {
     return snap.docs.length;
   }
 
-  /// 5) Ortalama Sipariş Tutarı (Bugünün Siparişleri)
+  /// 5) Ortalama Sipariş Tutarı (Bugünün Siparişleri) — Future versiyonu
   Future<double> getAvgOrderValueToday() async {
     final now = DateTime.now();
     final startOfDay = DateTime(now.year, now.month, now.day);
@@ -153,10 +156,10 @@ class AnalyticsProvider extends ChangeNotifier {
         total += qty * price;
       }
     }
-    return total / snap.docs.length; // gelir / sipariş adedi
+    return total / snap.docs.length;
   }
 
-  /// 6) Günün En Yoğun Saatleri (Son 24 Saat)
+  /// 6) Günün En Yoğun Saatleri (Son 24 Saat) — Future versiyonu
   Future<List<HourCount>> getBusiestHoursToday() async {
     final now = DateTime.now();
     final startOfDay = DateTime(now.year, now.month, now.day);
@@ -174,7 +177,6 @@ class AnalyticsProvider extends ChangeNotifier {
         )
         .get();
 
-    // Saat bazında say
     Map<int, int> hourMap = {for (var i = 0; i < 24; i++) i: 0};
 
     for (var doc in snap.docs) {
@@ -194,7 +196,209 @@ class AnalyticsProvider extends ChangeNotifier {
     return list;
   }
 
-  /// 7) Son 7 Gün Satış Toplamları (Stream)
+  //
+  // ──────────────── NEW STREAM‐BASED GETTERS FOR “LIVE UPDATES” ────────────────
+  //
+
+  /// 7) Bugünün Toplam Satışı (Stream versiyonu)
+  Stream<double> get todaySales$ {
+    final now = DateTime.now();
+    final startOfDay = DateTime(now.year, now.month, now.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1));
+
+    return _orderCol
+        .where('status', isEqualTo: 'paid')
+        .where(
+          'createdAt',
+          isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
+        )
+        .where(
+          'createdAt',
+          isLessThan: Timestamp.fromDate(endOfDay),
+        )
+        .snapshots()
+        .map((snapshot) {
+      double total = 0;
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final items = data['items'] as List<dynamic>? ?? [];
+        for (var it in items) {
+          final qty = (it['qty'] as num?)?.toDouble() ?? 0.0;
+          final price = (it['price'] as num?)?.toDouble() ?? 0.0;
+          total += qty * price;
+        }
+      }
+      return total;
+    });
+  }
+
+  /// 8) Bu Haftanın Toplam Satışı (Stream versiyonu)
+  Stream<double> get thisWeekSales$ {
+    return Stream.periodic(const Duration(seconds: 0))
+        .asyncExpand((_) => Stream.value(null))
+        .asyncMap((_) async {
+      // we still need “now” inside the closure to recalc every snapshot
+      final now = DateTime.now();
+      final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+      final start = DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day);
+      final end = start.add(const Duration(days: 7));
+      return [start, end];
+    }).asyncExpand((range) {
+      final start = range[0] as DateTime;
+      final end = range[1] as DateTime;
+      return _orderCol
+          .where('status', isEqualTo: 'paid')
+          .where(
+            'createdAt',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(start),
+          )
+          .where(
+            'createdAt',
+            isLessThan: Timestamp.fromDate(end),
+          )
+          .snapshots();
+    }).map((snapshot) {
+      double total = 0;
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final items = data['items'] as List<dynamic>? ?? [];
+        for (var it in items) {
+          final qty = (it['qty'] as num?)?.toDouble() ?? 0.0;
+          final price = (it['price'] as num?)?.toDouble() ?? 0.0;
+          total += qty * price;
+        }
+      }
+      return total;
+    });
+  }
+
+  /// 9) Bu Ayın Toplam Satışı (Stream versiyonu)
+  Stream<double> get thisMonthSales$ {
+    return Stream.periodic(const Duration(seconds: 0))
+        .asyncExpand((_) => Stream.value(null))
+        .asyncMap((_) async {
+      final now = DateTime.now();
+      final start = DateTime(now.year, now.month, 1);
+      final end = DateTime(now.year, now.month + 1, 1);
+      return [start, end];
+    }).asyncExpand((range) {
+      final start = range[0] as DateTime;
+      final end = range[1] as DateTime;
+      return _orderCol
+          .where('status', isEqualTo: 'paid')
+          .where(
+            'createdAt',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(start),
+          )
+          .where(
+            'createdAt',
+            isLessThan: Timestamp.fromDate(end),
+          )
+          .snapshots();
+    }).map((snapshot) {
+      double total = 0;
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final items = data['items'] as List<dynamic>? ?? [];
+        for (var it in items) {
+          final qty = (it['qty'] as num?)?.toDouble() ?? 0.0;
+          final price = (it['price'] as num?)?.toDouble() ?? 0.0;
+          total += qty * price;
+        }
+      }
+      return total;
+    });
+  }
+
+  /// 10) Bugünkü Sipariş Adedi (Stream versiyonu)
+  Stream<int> get todayOrderCount$ {
+    final now = DateTime.now();
+    final startOfDay = DateTime(now.year, now.month, now.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1));
+
+    return _orderCol
+        .where('status', isEqualTo: 'paid')
+        .where(
+          'createdAt',
+          isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
+        )
+        .where(
+          'createdAt',
+          isLessThan: Timestamp.fromDate(endOfDay),
+        )
+        .snapshots()
+        .map((snapshot) => snapshot.docs.length);
+  }
+
+  /// 11) Ortalama Sipariş Tutarı (Bugünün Siparişleri) — Stream versiyonu
+  Stream<double> get avgOrderValueToday$ {
+    final now = DateTime.now();
+    final startOfDay = DateTime(now.year, now.month, now.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1));
+
+    return _orderCol
+        .where('status', isEqualTo: 'paid')
+        .where(
+          'createdAt',
+          isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
+        )
+        .where(
+          'createdAt',
+          isLessThan: Timestamp.fromDate(endOfDay),
+        )
+        .snapshots()
+        .map((snapshot) {
+      if (snapshot.docs.isEmpty) return 0.0;
+      double total = 0;
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final items = data['items'] as List<dynamic>? ?? [];
+        for (var it in items) {
+          final qty = (it['qty'] as num?)?.toDouble() ?? 0.0;
+          final price = (it['price'] as num?)?.toDouble() ?? 0.0;
+          total += qty * price;
+        }
+      }
+      return total / snapshot.docs.length;
+    });
+  }
+
+  /// 12) Günün En Yoğun Saatleri (Son 24 Saat) — Stream versiyonu
+  Stream<List<HourCount>> get busiestHoursToday$ {
+    final now = DateTime.now();
+    final startOfDay = DateTime(now.year, now.month, now.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1));
+
+    return _orderCol
+        .where('status', isEqualTo: 'paid')
+        .where(
+          'createdAt',
+          isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
+        )
+        .where(
+          'createdAt',
+          isLessThan: Timestamp.fromDate(endOfDay),
+        )
+        .snapshots()
+        .map((snapshot) {
+      Map<int, int> hourMap = {for (var i = 0; i < 24; i++) i: 0};
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final ts = data['createdAt'] as Timestamp?;
+        if (ts == null) continue;
+        final dt = ts.toDate();
+        final hour = dt.hour;
+        hourMap[hour] = (hourMap[hour] ?? 0) + 1;
+      }
+      final list = hourMap.entries
+          .map((e) => HourCount(e.key, e.value))
+          .toList()
+        ..sort((a, b) => b.count.compareTo(a.count));
+      return list;
+    });
+  }
+
+  /// 13) Son 7 Gün Satış Toplamları (Stream versiyonu) — (unchanged)
   Stream<List<SalesData>> get weeklySales {
     return _orderCol
         .where('status', isEqualTo: 'paid')
@@ -242,7 +446,7 @@ class AnalyticsProvider extends ChangeNotifier {
     });
   }
 
-  /// 8) Son 30 Gün Satış Toplamları (Stream)
+  /// 14) Son 30 Gün Satış Toplamları (Stream versiyonu) — (unchanged)
   Stream<List<SalesData>> get last30DaysSales {
     return _orderCol
         .where('status', isEqualTo: 'paid')
