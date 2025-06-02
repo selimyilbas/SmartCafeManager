@@ -1,3 +1,5 @@
+// lib/screens/employee/kitchen_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -6,27 +8,41 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../providers/kitchen_provider.dart';
 
 class KitchenScreen extends StatelessWidget {
-  const KitchenScreen({super.key});
+  const KitchenScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    // TabBar’ı ve TabBarView’i aynı hizada tutmak için Column kullanıyoruz.
     return DefaultTabController(
       length: 3,
-      child: Scaffold(
-        appBar: const TabBar(
-          tabs: [
-            Tab(text: 'Pending'),
-            Tab(text: 'Preparing'),
-            Tab(text: 'Ready'),
-          ],
-        ),
-        body: const TabBarView(
-          children: [
-            _OrderList(status: 'pending'),
-            _OrderList(status: 'preparing'),
-            _OrderList(status: 'ready'),
-          ],
-        ),
+      child: Column(
+        children: [
+          // 1) TabBar: “EmployeeHome”’ın AppBar’ından hemen sonra gözükür.
+          const Material(
+            color: Colors.white, // veya tercihinize göre renk
+            child: TabBar(
+              labelColor: Colors.purple,
+              unselectedLabelColor: Colors.grey,
+              indicatorColor: Colors.purple,
+              tabs: [
+                Tab(text: 'Pending'),
+                Tab(text: 'Preparing'),
+                Tab(text: 'Ready'),
+              ],
+            ),
+          ),
+
+          // 2) TabBarView: Her tab için _OrderList gönderiyoruz
+          const Expanded(
+            child: TabBarView(
+              children: [
+                _OrderList(status: 'pending'),
+                _OrderList(status: 'preparing'),
+                _OrderList(status: 'ready'),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -56,44 +72,57 @@ class _OrderList extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: 12),
           itemCount: docs.length,
           itemBuilder: (_, i) {
-            /*  Firestore verisi  */
-            final d       = docs[i].data();
-            final oid     = docs[i].id;
-            final items   = (d['items'] ?? []) as List<dynamic>;
+            final d = docs[i].data();
+            final oid = docs[i].id;
+            final items = (d['items'] ?? []) as List<dynamic>;
             final tableId = d['tableId'] ?? '—';
 
-            final created = (d['createdAt'] as Timestamp).toDate();
+            final created =
+                (d['createdAt'] as Timestamp).toDate(); // Sarı çizgi olmaz
             final fmtTime = DateFormat.Hm().format(created);
-            final minutes = DateTime.now().difference(created).inMinutes;
 
-            /* Bekleme süresi rengine göre uyarı */
+            // Mutfakta “Ready” olduktan sonra Timer’ın durması için:
+            // Eğer status 'ready' ise, kullanılan süreyi “readyAt” üzerinden hesaplayacağız.
+            final minutes = (() {
+              if (status == 'ready') {
+                final readyTs = d['readyAt'] as Timestamp?;
+                if (readyTs != null) {
+                  final readyDate = readyTs.toDate();
+                  return readyDate
+                      .difference((d['createdAt'] as Timestamp).toDate())
+                      .inMinutes;
+                }
+              }
+              // Aksi takdirde normal “await süresi” (pending veya preparing tab’ı için):
+              return DateTime.now().difference(created).inMinutes;
+            })();
+
             final ageColor = minutes > 15
                 ? Colors.red
                 : minutes > 5
                     ? Colors.orange
                     : Colors.grey;
 
-            /*  Başlık bilgisi  */
-            final totalQty = items.fold<int>(0, (p, e) => p + (e['qty'] as int));
-            final title    = '$totalQty ürün • Masa: $tableId';
+            final totalQty =
+                items.fold<int>(0, (p, e) => p + (e['qty'] as int));
+            final title = '$totalQty ürün • Masa: $tableId';
 
-            /*  Alt başlık (her satır:  qty × ad  (opts)  Not: … ) */
             final subtitle = items.map((e) {
-              final q   = e['qty'];
-              final nm  = e['name'];
+              final q = e['qty'];
+              final nm = e['name'];
               final opt = (e['options'] ?? {}) as Map;
               final optsText =
                   opt.entries.map((e) => '${e.key}:${e.value}').join(', ');
               final note = (e['note'] ?? '').toString().trim();
               final noteTxt = note.isNotEmpty ? '\n    Not: $note' : '';
               return '• $q × $nm'
-                     '${optsText.isNotEmpty ? '  ($optsText)' : ''}'
-                     '$noteTxt';
+                  '${optsText.isNotEmpty ? '  ($optsText)' : ''}'
+                  '$noteTxt';
             }).join('\n');
 
-            /*  Kart  */
             return Card(
-              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              margin:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               child: Padding(
                 padding: const EdgeInsets.all(12),
                 child: Row(
@@ -108,7 +137,8 @@ class _OrderList extends StatelessWidget {
                               style: const TextStyle(
                                   fontWeight: FontWeight.w600)),
                           const SizedBox(height: 4),
-                          Text(subtitle, style: const TextStyle(fontSize: 13)),
+                          Text(subtitle,
+                              style: const TextStyle(fontSize: 13)),
                         ],
                       ),
                     ),
@@ -154,7 +184,7 @@ class _OrderList extends StatelessWidget {
           onPressed: () => p.setReady(oid),
         );
       default:
-        return const SizedBox.shrink();      // ready kartı için buton yok
+        return const SizedBox.shrink();
     }
   }
 }

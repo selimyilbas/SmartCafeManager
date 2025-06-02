@@ -4,10 +4,10 @@ import 'package:provider/provider.dart';
 import 'package:another_flushbar/flushbar.dart';
 import 'package:badges/badges.dart' as badges;
 
-import '../models/menu_item.dart';
-import '../services/menu_service.dart';
-import '../providers/cart_provider.dart';
-import '../widgets/item_options_sheet.dart';
+import '../../models/menu_item.dart';
+import '../../services/menu_service.dart';
+import '../../providers/cart_provider.dart';
+import '../../widgets/item_options_sheet.dart';
 
 class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});

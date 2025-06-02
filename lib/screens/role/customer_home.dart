@@ -5,19 +5,23 @@ import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
 import '../../providers/table_provider.dart';
-import '../../providers/order_provider.dart';    // **Yeni**: OrderProvider
+import '../../providers/order_provider.dart';   
 import '../../services/call_service.dart';
 
 import '../scan_table_screen.dart';
 import '../customer/pay_screen.dart';
 
-class CustomerHome extends StatelessWidget {
-  const CustomerHome({super.key});
+class CustomerHome extends StatefulWidget {
+  const CustomerHome({Key? key}) : super(key: key);
 
+  @override
+  State<CustomerHome> createState() => _CustomerHomeState();
+}
+
+class _CustomerHomeState extends State<CustomerHome> {
   void _signOut(BuildContext context) async {
     final auth = context.read<AuthProvider>();
     await auth.signOut();
-
     Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
   }
 
@@ -27,7 +31,7 @@ class CustomerHome extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('[Customer] Home'),
+        title: const Text('Customer Stakeholder'),
         actions: [
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert),
@@ -48,7 +52,6 @@ class CustomerHome extends StatelessWidget {
             onSelected: (value) async {
               switch (value) {
                 case 'pastOrders':
-                  // “Geçmiş Siparişler” ekranına git
                   Navigator.pushNamed(context, '/pastOrders');
                   break;
                 case 'leave':
@@ -113,7 +116,7 @@ class CustomerHome extends StatelessWidget {
                       MaterialPageRoute(builder: (_) => const PayScreen()),
                     );
                   }
-                : null, // Masaya oturulmamışsa pasif
+                : null,
           ),
           const SizedBox(height: 12),
           ElevatedButton(
@@ -122,6 +125,10 @@ class CustomerHome extends StatelessWidget {
           ),
         ],
       ),
+
+      // ----------------------------------------------
+      // ** Müşteri için BottomNavigationBar kaldırıldı **
+      // ----------------------------------------------
     );
   }
 }

@@ -84,12 +84,15 @@ class OrderService {
     final data = <String, Object?>{'status': newStatus};
 
     if (newStatus == 'preparing') {
+      // "preparing" durumuna geçince startedAt ekleyelim (opsiyonel)
       data['startedAt'] = FieldValue.serverTimestamp();
     }
     if (newStatus == 'ready') {
+      // "ready" durumuna geçince readyAt ekleyelim
       data['readyAt'] = FieldValue.serverTimestamp();
     }
     if (newStatus == 'paid') {
+      // "paid" durumuna geçince paidAt ekleyelim
       data['paidAt'] = FieldValue.serverTimestamp();
     }
 

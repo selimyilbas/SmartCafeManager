@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:provider/provider.dart';
-import '../../providers/table_provider.dart';
-import '../../services/table_service.dart';
+import '../../../providers/table_provider.dart';
+import '../../../services/table_service.dart';
 
 class ScanTableScreen extends StatefulWidget {
   const ScanTableScreen({super.key});

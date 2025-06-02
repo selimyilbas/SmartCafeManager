@@ -1,3 +1,5 @@
+// lib/providers/kitchen_provider.dart
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/order_service.dart';
@@ -5,6 +7,7 @@ import '../services/order_service.dart';
 class KitchenProvider extends ChangeNotifier {
   final _service = OrderService();
 
+  /// “status” parametresi “pending” / “preparing” / “ready” olabilir.
   Stream<QuerySnapshot<Map<String, dynamic>>> stream(String status) =>
       _service.streamByStatus(status);
 

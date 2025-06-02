@@ -8,7 +8,7 @@ import '../manager/stock_alert_screen.dart';
 import '../manager/settings_screen.dart';
 
 class ManagerHome extends StatefulWidget {
-  const ManagerHome({super.key});
+  const ManagerHome({Key? key}) : super(key: key);
 
   @override
   State<ManagerHome> createState() => _ManagerHomeState();
@@ -17,7 +17,7 @@ class ManagerHome extends StatefulWidget {
 class _ManagerHomeState extends State<ManagerHome> {
   int _selectedIndex = 0;
 
-  static const List<Widget> _pages = [
+  static const List<Widget> _pages = <Widget>[
     DashboardScreen(),
     MenuAdminScreen(),
     StaffScreen(),
@@ -34,31 +34,38 @@ class _ManagerHomeState extends State<ManagerHome> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('[Manager]'),
-      ),
+      // AppBar ve body kısmı değişmedi:
       body: _pages[_selectedIndex],
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: _onItemTapped,
-        destinations: const [
-          NavigationDestination(
+
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+
+        // **Buraya ekliyoruz:**
+        selectedItemColor: Colors.green.shade700,
+        unselectedItemColor: Colors.black54,
+        // Eğer ikonların sürekli gölge vs. olmadan sabit görünmesini isterseniz:
+        // showSelectedLabels: true, 
+        // showUnselectedLabels: true,
+
+        items: const [
+          BottomNavigationBarItem(
             icon: Icon(Icons.bar_chart),
             label: 'Dash',
           ),
-          NavigationDestination(
+          BottomNavigationBarItem(
             icon: Icon(Icons.menu_book),
             label: 'Menu',
           ),
-          NavigationDestination(
+          BottomNavigationBarItem(
             icon: Icon(Icons.people),
             label: 'Staff',
           ),
-          NavigationDestination(
-            icon: Icon(Icons.warning),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.report_problem),
             label: 'Stock',
           ),
-          NavigationDestination(
+          BottomNavigationBarItem(
             icon: Icon(Icons.settings),
             label: 'More',
           ),
