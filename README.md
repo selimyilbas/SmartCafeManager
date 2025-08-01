@@ -254,7 +254,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👥 Authors
 
-- **Selim Yılbaş** - *Initial work* - [@selimyilbas](https://github.com/selimyilbas)
+- **Selim Yılbaş** -  [@selimyilbas](https://github.com/selimyilbas)
 
 ## 🙏 Acknowledgments
 
@@ -263,15 +263,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Flutter Community](https://flutter.dev/community) for packages and support
 - All contributors who have helped shape this project
 
-## 📞 Support
 
-For support, email support@smartcafe.com or join our Slack channel.
 
----
-
-<div align="center">
-  <p>Made with ❤️ by <a href="https://github.com/selimyilbas">Selim Yılbaş</a></p>
-  <p>
-    <a href="https://github.com/selimyilbas/SmartCafeManager/stargazers">⭐ Star this repository</a> if you find it helpful!
-  </p>
-</div>
